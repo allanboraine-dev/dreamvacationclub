@@ -1,0 +1,7 @@
+{
+  "name": "Dream Vacation Club Mobile MVP",
+  "description": "A luxury mobile-first experience for Dream Vacation Club members, featuring points management, AI concierge, and digital access.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
