@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Search as SearchIcon, MapPin, Star, Filter, Loader2, Check, Mail, Calendar, X, Bed, Users, Info, ChevronRight, AlertCircle, Plus, Minus, Map as MapIcon, List as ListIcon } from 'lucide-react';
+import { Search as SearchIcon, MapPin, Star, Filter, Loader2, Check, Mail, Calendar, X, Bed, Users, Info, ChevronRight, AlertCircle, Plus, Minus, Map as MapIcon, List as ListIcon, Clock } from 'lucide-react';
 import { RESORTS } from '../constants';
-import { Resort, NotificationFunc, UpcomingHoliday } from '../types';
+import { Resort, NotificationFunc, UpcomingHoliday, CancellationWatch } from '../types';
 import ResortMap from './ResortMap';
 
 interface SearchProps {
     showNotification: NotificationFunc;
     onAddBooking: (booking: Omit<UpcomingHoliday, 'id' | 'confirmationCode' | 'status'>) => void;
+    onAddWatch: (watch: Omit<CancellationWatch, 'id'>) => void;
 }
 
 // Extended status to include date selection phase and unavailable result
@@ -35,7 +36,7 @@ const generateUnits = (resort: Resort): UnitOption[] => [
     { name: 'Luxury 2-Bedroom', capacity: resort.maxGuests + 2, multiplier: 1.6 }
 ];
 
-const Search: React.FC<SearchProps> = ({ showNotification, onAddBooking }) => {
+const Search: React.FC<SearchProps> = ({ showNotification, onAddBooking, onAddWatch }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
     const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
@@ -401,8 +402,8 @@ const Search: React.FC<SearchProps> = ({ showNotification, onAddBooking }) => {
                                                         }
                                                     }}
                                                     className={`flex-shrink-0 px-3 py-2 rounded-lg border text-xs text-left min-w-[100px] transition-all ${currentSelection.unitIdx === idx
-                                                            ? 'bg-navy-900 dark:bg-white text-white dark:text-navy-900 border-navy-900 dark:border-white shadow-md'
-                                                            : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-navy-700'
+                                                        ? 'bg-navy-900 dark:bg-white text-white dark:text-navy-900 border-navy-900 dark:border-white shadow-md'
+                                                        : 'bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-navy-700'
                                                         }`}
                                                 >
                                                     <div className="font-bold mb-0.5">{unit.name}</div>
@@ -452,8 +453,35 @@ const Search: React.FC<SearchProps> = ({ showNotification, onAddBooking }) => {
 
                         {/* STATUS: UNAVAILABLE */}
                         {status === 'unavailable' && (
-                            <div className="w-full py-3 rounded-xl bg-red-50 dark:bg-red-900/10 text-red-800 dark:text-red-300 border border-red-100 dark:border-red-900/30 font-medium text-xs flex items-center justify-center cursor-default">
-                                <span className="flex items-center gap-2"><AlertCircle size={16} /> No availability for selected dates</span>
+                            <div className="flex flex-col gap-2">
+                                <div className="w-full py-3 rounded-xl bg-red-50 dark:bg-red-900/10 text-red-800 dark:text-red-300 border border-red-100 dark:border-red-900/30 font-medium text-xs flex items-center justify-center cursor-default">
+                                    <span className="flex items-center gap-2"><AlertCircle size={16} /> No availability for selected dates</span>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const d = dates[resort.id];
+                                        if (d && d.checkIn && d.checkOut) {
+                                            onAddWatch({
+                                                resortId: resort.id,
+                                                resortName: resort.name,
+                                                location: resort.location,
+                                                checkIn: d.checkIn,
+                                                checkOut: d.checkOut,
+                                                status: 'Active'
+                                            });
+                                            setBookingState(prev => ({ ...prev, [resort.id]: 'idle' }));
+                                        }
+                                    }}
+                                    className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-amber-500 text-white font-bold text-xs hover:bg-slate-800 dark:hover:bg-amber-600 transition-colors shadow-sm flex items-center justify-center gap-2"
+                                >
+                                    <Clock size={14} /> Set Cancellation Watch
+                                </button>
+                                <button
+                                    onClick={() => handleCancelDates(resort.id)}
+                                    className="w-full py-2 rounded-xl text-slate-500 font-medium text-xs hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                                >
+                                    Cancel
+                                </button>
                             </div>
                         )}
                         {/* STATUS: BOOKED */}

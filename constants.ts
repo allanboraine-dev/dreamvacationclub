@@ -19,8 +19,8 @@ export const MOCK_USER: MemberProfile = {
       id: "BK-2024-001",
       resortName: "Peninsula All-Suite Hotel",
       location: "Cape Town, Western Cape",
-      checkIn: "2024-06-15",
-      checkOut: "2024-06-20",
+      checkIn: "2026-03-15",
+      checkOut: "2026-03-20",
       confirmationCode: "RES-88421",
       imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=1000",
       guests: 4,
@@ -31,13 +31,24 @@ export const MOCK_USER: MemberProfile = {
       id: "BK-2024-002",
       resortName: "Drakensberg Sun Resort",
       location: "Winterton, KZN",
-      checkIn: "2024-08-10",
-      checkOut: "2024-08-15",
+      checkIn: "2026-03-22",
+      checkOut: "2026-03-27",
       confirmationCode: "RES-99321",
       imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000",
       guests: 2,
       pointsUsed: 1500,
       status: 'Confirmed'
+    }
+  ],
+  activeWatches: [
+    {
+      id: "WATCH-DEMO-001",
+      resortId: "wc-2",
+      resortName: "Beacon Island Resort",
+      location: "Plettenberg Bay",
+      checkIn: "2026-03-15",
+      checkOut: "2026-03-20",
+      status: 'Active'
     }
   ]
 };
@@ -47,8 +58,8 @@ export const CANCELLATION_DEALS: CancellationDeal[] = [
     id: "DEAL-001",
     resortName: "Umhlanga Sands Resort",
     location: "Umhlanga Rocks, KZN",
-    checkIn: "2024-06-21",
-    checkOut: "2024-06-23",
+    checkIn: "2026-03-21",
+    checkOut: "2026-03-23",
     // Switched to a high-quality landscape resort image that fits 16:9 containers perfectly
     imageUrl: "https://images.unsplash.com/photo-1437719417032-8595fd9e9dc6?auto=format&fit=crop&q=80&w=1000",
     oldPoints: 1200,
@@ -59,8 +70,8 @@ export const CANCELLATION_DEALS: CancellationDeal[] = [
     id: "DEAL-002",
     resortName: "Sun City Cascades",
     location: "North West",
-    checkIn: "2024-07-05",
-    checkOut: "2024-07-07",
+    checkIn: "2026-04-05",
+    checkOut: "2026-04-07",
     imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1000",
     oldPoints: 2500,
     newPoints: 1800,
@@ -85,7 +96,7 @@ export const RESORTS: Resort[] = [
     maxGuests: 4
     ,
     unavailableRanges: [
-      { from: '2024-06-15', to: '2024-06-20' } // user booking overlap
+      { from: '2026-03-15', to: '2026-03-20' } // user booking overlap
     ]
   },
   {
@@ -99,7 +110,10 @@ export const RESORTS: Resort[] = [
     amenities: ["Private Beach", "Kids Club", "Diving"],
     description: "The jewel of the Garden Route, surrounded by the ocean.",
     roomType: "Lagoon View Suite",
-    maxGuests: 2
+    maxGuests: 2,
+    unavailableRanges: [
+      { from: '2026-03-15', to: '2026-03-20' }
+    ]
   },
   {
     id: "wc-3",
@@ -143,7 +157,7 @@ export const RESORTS: Resort[] = [
     maxGuests: 4
     ,
     unavailableRanges: [
-      { from: '2024-08-12', to: '2024-08-14' }
+      { from: '2026-03-22', to: '2026-03-27' }
     ]
   },
   {

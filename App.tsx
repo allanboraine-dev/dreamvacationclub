@@ -10,16 +10,16 @@ import Trips from './components/Trips';
 import Login from './components/Login';
 import BuyPoints from './components/BuyPoints';
 import Transfer from './components/Transfer';
-import { AppView, NotificationFunc, MemberProfile, UpcomingHoliday, CancellationDeal } from './types';
+import { AppView, NotificationFunc, MemberProfile, UpcomingHoliday, CancellationDeal, CancellationWatch } from './types';
 import { MOCK_USER, CANCELLATION_DEALS } from './constants';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.LOGIN);
-  const [notification, setNotification] = useState<{msg: string, type: 'success' | 'info' | 'error'} | null>(null);
-  
+  const [notification, setNotification] = useState<{ msg: string, type: 'success' | 'info' | 'error' } | null>(null);
+
   // State for Dark Mode
   const [isDarkMode, setIsDarkMode] = useState(false);
-  
+
   // Lift user state so we can manipulate points
   const [user, setUser] = useState<MemberProfile>(MOCK_USER);
 
@@ -58,43 +58,57 @@ const App: React.FC = () => {
 
   const handleUpdatePoints = (amount: number, type: 'add' | 'subtract') => {
     setUser(prev => ({
-        ...prev,
-        points: {
-            ...prev.points,
-            available: type === 'add' ? prev.points.available + amount : prev.points.available - amount,
-            total: type === 'add' ? prev.points.total + amount : prev.points.total
-        }
+      ...prev,
+      points: {
+        ...prev.points,
+        available: type === 'add' ? prev.points.available + amount : prev.points.available - amount,
+        total: type === 'add' ? prev.points.total + amount : prev.points.total
+      }
     }));
   };
 
   const handleAddBooking = (newBooking: Omit<UpcomingHoliday, 'id' | 'confirmationCode' | 'status'>) => {
-     const bookingId = `DVC-${Math.floor(Math.random() * 10000)}`;
-     const fullBooking: UpcomingHoliday = {
-         ...newBooking,
-         id: bookingId,
-         confirmationCode: bookingId,
-         status: 'Confirmed'
-     };
+    const bookingId = `DVC-${Math.floor(Math.random() * 10000)}`;
+    const fullBooking: UpcomingHoliday = {
+      ...newBooking,
+      id: bookingId,
+      confirmationCode: bookingId,
+      status: 'Confirmed'
+    };
 
-     // Deduct points
-     handleUpdatePoints(newBooking.pointsUsed, 'subtract');
+    // Deduct points
+    handleUpdatePoints(newBooking.pointsUsed, 'subtract');
 
-     // Add to list (at start)
-     setUser(prev => ({
-         ...prev,
-         bookings: [fullBooking, ...prev.bookings]
-     }));
+    // Add to list (at start)
+    setUser(prev => ({
+      ...prev,
+      bookings: [fullBooking, ...prev.bookings]
+    }));
+  };
+
+  const handleAddWatch = (watch: Omit<CancellationWatch, 'id' | 'status'>) => {
+    const newWatch: CancellationWatch = {
+      ...watch,
+      id: `WATCH-${Date.now()}`,
+      status: 'Active'
+    };
+
+    setUser(prev => ({
+      ...prev,
+      activeWatches: [newWatch, ...prev.activeWatches]
+    }));
+    showNotification(`Watch set for ${watch.resortName}`, 'success');
   };
 
   const handleCancelBooking = (bookingId: string) => {
     const bookingToCancel = user.bookings.find(b => b.id === bookingId);
-    
+
     if (!bookingToCancel) return;
 
     // 1. Remove from User Bookings (or mark cancelled)
     setUser(prev => ({
-        ...prev,
-        bookings: prev.bookings.filter(b => b.id !== bookingId)
+      ...prev,
+      bookings: prev.bookings.filter(b => b.id !== bookingId)
     }));
 
     // 2. Refund Points (e.g., 80% refund policy)
@@ -104,39 +118,66 @@ const App: React.FC = () => {
     // 3. Create a "Cancellation Deal" for the Dashboard
     // The deal is usually cheaper than original to sell fast (e.g., 50% of original cost)
     const dealPrice = Math.floor(bookingToCancel.pointsUsed * 0.5);
-    
+
+    // 3.5 Check for matching Active Watches
+    // A simple match checks if the resort is the same. In a real app, it would check dates too.
+    const matchingWatchIndex = user.activeWatches.findIndex(w =>
+      w.status === 'Active' &&
+      w.resortName === bookingToCancel.resortName
+    );
+
+    let isMatchedDeal = false;
+
+    if (matchingWatchIndex !== -1) {
+      // We found a match! update the watch status to matched
+      isMatchedDeal = true;
+
+      setUser(prev => {
+        const updatedWatches = [...prev.activeWatches];
+        updatedWatches[matchingWatchIndex] = {
+          ...updatedWatches[matchingWatchIndex],
+          status: 'Matched'
+        };
+        return { ...prev, activeWatches: updatedWatches };
+      });
+
+      showNotification(`🔥 MATCH FOUND! A cancellation at ${bookingToCancel.resortName} just became available!`, 'success');
+    }
+
     const newDeal: CancellationDeal = {
-        id: `DEAL-${Date.now()}`,
-        resortName: bookingToCancel.resortName,
-        location: bookingToCancel.location,
-        checkIn: bookingToCancel.checkIn,
-        checkOut: bookingToCancel.checkOut,
-        imageUrl: bookingToCancel.imageUrl,
-        oldPoints: bookingToCancel.pointsUsed,
-        newPoints: dealPrice,
-        timeLeft: "Just Released"
+      id: `DEAL-${Date.now()}`,
+      resortName: bookingToCancel.resortName,
+      location: bookingToCancel.location,
+      checkIn: bookingToCancel.checkIn,
+      checkOut: bookingToCancel.checkOut,
+      imageUrl: bookingToCancel.imageUrl,
+      oldPoints: bookingToCancel.pointsUsed,
+      newPoints: dealPrice,
+      timeLeft: isMatchedDeal ? "MATCHED FOR YOU" : "Just Released"
     };
 
     setActiveDeals(prev => [newDeal, ...prev]);
 
     // 4. Notifications and Navigation
-    showNotification(`Booking Cancelled. ${refundAmount} points refunded.`, 'success');
+    if (!isMatchedDeal) {
+      showNotification(`Booking Cancelled. ${refundAmount} points refunded.`, 'success');
+    }
     setCurrentView(AppView.DASHBOARD);
   };
 
   const handleViewBooking = (id: string) => {
-      setSelectedBookingId(id);
-      setCurrentView(AppView.ITINERARY);
+    setSelectedBookingId(id);
+    setCurrentView(AppView.ITINERARY);
   };
 
   // Demo Handlers for Sales Presentation
   const handleSimulateSync = () => {
     showNotification("Syncing with ResortOS Backend...", "info");
     setTimeout(() => {
-        // Randomly fluctuate available points to show "live" data
-        const fluctuation = Math.floor(Math.random() * 500) - 250;
-        handleUpdatePoints(Math.abs(fluctuation), fluctuation > 0 ? 'add' : 'subtract');
-        showNotification("Data Sync Complete. Balance updated.", "success");
+      // Randomly fluctuate available points to show "live" data
+      const fluctuation = Math.floor(Math.random() * 500) - 250;
+      handleUpdatePoints(Math.abs(fluctuation), fluctuation > 0 ? 'add' : 'subtract');
+      showNotification("Data Sync Complete. Balance updated.", "success");
     }, 2000);
   };
 
@@ -156,6 +197,34 @@ const App: React.FC = () => {
     showNotification("⚠️ NEW INVENTORY DETECTED: Zimbali", "success");
   };
 
+  const handleSimulateMatch = () => {
+    // 1. Ensure user has the watch status as 'Matched'
+    setUser(prev => {
+      const updatedWatches = [...prev.activeWatches];
+      const watchIdx = updatedWatches.findIndex(w => w.resortName === "Beacon Island Resort");
+      if (watchIdx !== -1) {
+        updatedWatches[watchIdx] = { ...updatedWatches[watchIdx], status: 'Matched' };
+      }
+      return { ...prev, activeWatches: updatedWatches };
+    });
+
+    // 2. Inject the deal
+    const newDeal: CancellationDeal = {
+      id: `MATCH-${Date.now()}`,
+      resortName: "Beacon Island Resort",
+      location: "Plettenberg Bay",
+      checkIn: "2026-03-15",
+      checkOut: "2026-03-20",
+      imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1000",
+      oldPoints: 6750, // 5 nights * 1350
+      newPoints: 3375, // 50% discount
+      timeLeft: "MATCHED FOR YOU"
+    };
+
+    setActiveDeals(prev => [newDeal, ...prev]);
+    showNotification("🔥 BREAKING: A match was found for your Beacon Island watch!", "success");
+  };
+
   const handleResetDemo = () => {
     setUser(MOCK_USER);
     setActiveDeals(CANCELLATION_DEALS);
@@ -167,23 +236,24 @@ const App: React.FC = () => {
       case AppView.LOGIN:
         return <Login onLoginSuccess={handleLoginSuccess} showNotification={showNotification} />;
       case AppView.DASHBOARD:
-        return <Dashboard 
-          user={user} 
+        return <Dashboard
+          user={user}
           activeDeals={activeDeals}
           onNavigate={setCurrentView}
-          showNotification={showNotification} 
-          isDarkMode={isDarkMode} 
+          showNotification={showNotification}
+          isDarkMode={isDarkMode}
           toggleDarkMode={toggleDarkMode}
           onAddBooking={handleAddBooking}
           onSimulateSync={handleSimulateSync}
           onTriggerDeal={handleTriggerDeal}
+          onSimulateMatch={handleSimulateMatch}
           onResetDemo={handleResetDemo}
         />;
       case AppView.SEARCH:
-        return <Search showNotification={showNotification} onAddBooking={(b) => {
-            handleAddBooking(b);
-            setTimeout(() => setCurrentView(AppView.TRIPS), 1000); // Redirect to Trips on normal search booking
-        }} />;
+        return <Search showNotification={showNotification} onAddBooking={(b: any) => {
+          handleAddBooking(b);
+          setTimeout(() => setCurrentView(AppView.TRIPS), 1000); // Redirect to Trips on normal search booking
+        }} onAddWatch={handleAddWatch} />;
       case AppView.CARD:
         return <DigitalCard user={user} />;
       case AppView.CONCIERGE:
@@ -193,10 +263,10 @@ const App: React.FC = () => {
       case AppView.TRIPS:
         return <Trips user={user} onViewBooking={handleViewBooking} onNavigate={setCurrentView} />;
       case AppView.ITINERARY:
-        return <Itinerary 
-          user={user} 
+        return <Itinerary
+          user={user}
           bookingId={selectedBookingId}
-          onNavigate={setCurrentView} 
+          onNavigate={setCurrentView}
           showNotification={showNotification}
           onCancelBooking={handleCancelBooking}
         />;
@@ -205,17 +275,18 @@ const App: React.FC = () => {
       case AppView.TRANSFER:
         return <Transfer user={user} onNavigate={setCurrentView} showNotification={showNotification} onUpdatePoints={handleUpdatePoints} />;
       default:
-        return <Dashboard 
-            user={user} 
-            activeDeals={activeDeals} 
-            onNavigate={setCurrentView} 
-            showNotification={showNotification} 
-            isDarkMode={isDarkMode} 
-            toggleDarkMode={toggleDarkMode} 
-            onAddBooking={handleAddBooking} 
-            onSimulateSync={handleSimulateSync}
-            onTriggerDeal={handleTriggerDeal}
-            onResetDemo={handleResetDemo}
+        return <Dashboard
+          user={user}
+          activeDeals={activeDeals}
+          onNavigate={setCurrentView}
+          showNotification={showNotification}
+          isDarkMode={isDarkMode}
+          toggleDarkMode={toggleDarkMode}
+          onAddBooking={handleAddBooking}
+          onSimulateSync={handleSimulateSync}
+          onTriggerDeal={handleTriggerDeal}
+          onSimulateMatch={handleSimulateMatch}
+          onResetDemo={handleResetDemo}
         />;
     }
   };
@@ -223,14 +294,14 @@ const App: React.FC = () => {
   const NavItem = ({ view, icon: Icon, label }: { view: AppView; icon: any; label: string }) => {
     const isActive = currentView === view;
     // Check if a child view is active (like Itinerary for Trips, or specific modals for Dashboard)
-    const isParentActive = 
-      isActive || 
+    const isParentActive =
+      isActive ||
       (currentView === AppView.ITINERARY && view === AppView.TRIPS) || // Itinerary now falls under Trips conceptually
-      (currentView === AppView.BUY_POINTS && view === AppView.DASHBOARD) || 
+      (currentView === AppView.BUY_POINTS && view === AppView.DASHBOARD) ||
       (currentView === AppView.TRANSFER && view === AppView.DASHBOARD);
 
     return (
-      <button 
+      <button
         onClick={() => setCurrentView(view)}
         className={`flex flex-col items-center justify-center w-full h-full transition-all duration-200 ${isActive || (isParentActive && !isActive) ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}
       >
@@ -245,15 +316,14 @@ const App: React.FC = () => {
       {/* Toast Notification - Adjusted top position for Safe Area */}
       {notification && (
         <div className="absolute top-4 left-4 right-4 pt-safe z-[60] animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none">
-          <div className={`rounded-xl p-4 shadow-xl border flex items-center gap-3 pointer-events-auto ${
-            notification.type === 'success' ? 'bg-navy-900 text-white border-navy-800' : 
-            notification.type === 'error' ? 'bg-red-50 text-red-800 border-red-100' : 
-            isDarkMode ? 'bg-navy-800 text-white border-navy-700' : 'bg-white text-navy-900 border-slate-100'
-          }`}>
-             {notification.type === 'success' && <CheckCircle size={20} className="text-green-400" />}
-             {notification.type === 'error' && <XCircle size={20} className="text-red-500" />}
-             {notification.type === 'info' && <Info size={20} className="text-amber-500" />}
-             <span className="text-sm font-medium">{notification.msg}</span>
+          <div className={`rounded-xl p-4 shadow-xl border flex items-center gap-3 pointer-events-auto ${notification.type === 'success' ? 'bg-navy-900 text-white border-navy-800' :
+            notification.type === 'error' ? 'bg-red-50 text-red-800 border-red-100' :
+              isDarkMode ? 'bg-navy-800 text-white border-navy-700' : 'bg-white text-navy-900 border-slate-100'
+            }`}>
+            {notification.type === 'success' && <CheckCircle size={20} className="text-green-400" />}
+            {notification.type === 'error' && <XCircle size={20} className="text-red-500" />}
+            {notification.type === 'info' && <Info size={20} className="text-amber-500" />}
+            <span className="text-sm font-medium">{notification.msg}</span>
           </div>
         </div>
       )}
@@ -269,15 +339,15 @@ const App: React.FC = () => {
           <div className="w-full max-w-md flex items-start pt-2 justify-around px-2 pb-safe">
             <NavItem view={AppView.DASHBOARD} icon={Home} label="Home" />
             <NavItem view={AppView.SEARCH} icon={SearchIcon} label="Explore" />
-            
+
             {/* Floating Concierge Button */}
             <div className="relative -top-8">
-                <button 
-                    onClick={() => setCurrentView(AppView.CONCIERGE)}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30 transition-transform active:scale-95 ${currentView === AppView.CONCIERGE ? 'bg-navy-900 dark:bg-navy-800 text-amber-400 ring-4 ring-slate-50 dark:ring-navy-950' : 'bg-amber-500 text-white'}`}
-                >
-                    <Sparkles size={24} fill={currentView === AppView.CONCIERGE ? "currentColor" : "none"} />
-                </button>
+              <button
+                onClick={() => setCurrentView(AppView.CONCIERGE)}
+                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/30 transition-transform active:scale-95 ${currentView === AppView.CONCIERGE ? 'bg-navy-900 dark:bg-navy-800 text-amber-400 ring-4 ring-slate-50 dark:ring-navy-950' : 'bg-amber-500 text-white'}`}
+              >
+                <Sparkles size={24} fill={currentView === AppView.CONCIERGE ? "currentColor" : "none"} />
+              </button>
             </div>
 
             <NavItem view={AppView.TRIPS} icon={Briefcase} label="Trips" />

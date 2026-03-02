@@ -32,6 +32,16 @@ export interface CancellationDeal {
   timeLeft: string; // e.g. "2 hours left"
 }
 
+export interface CancellationWatch {
+  id: string;
+  resortId: string;
+  resortName: string;
+  location: string;
+  checkIn: string;
+  checkOut: string;
+  status: 'Active' | 'Matched';
+}
+
 export interface MemberProfile {
   id: string;
   firstName: string;
@@ -41,6 +51,7 @@ export interface MemberProfile {
   rsaId: string; // Used for validation logic
   points: PointBalance;
   bookings: UpcomingHoliday[];
+  activeWatches: CancellationWatch[];
 }
 
 export interface Resort {
