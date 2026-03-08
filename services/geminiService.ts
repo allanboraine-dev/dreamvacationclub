@@ -1,8 +1,7 @@
-// Frontend wrapper that calls the secure Netlify function at /.netlify/functions/concierge
-// The function holds the real API key server-side. The frontend only sends a prompt.
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Direct client-side calls to Gemini API
 export const generateConciergeResponse = async (userMessage: string, userProfile: any) => {
-  // Build the prompt client-side (uses local constants/resorts if needed)
   const resortContext = JSON.stringify((userProfile && userProfile.availableResorts) || []);
   const userContext = JSON.stringify({ name: userProfile?.firstName || 'Member', availablePoints: userProfile?.points?.available || 0, location: 'South Africa' });
 
@@ -23,21 +22,18 @@ export const generateConciergeResponse = async (userMessage: string, userProfile
   `;
 
   try {
-    const res = await fetch('/.netlify/functions/concierge', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
-
-    if (!res.ok) {
-      console.error('Concierge function responded with', res.status, await res.text());
-      return "I am currently offline. Please check your internet connection.";
+    const apiKey = import.meta.env.VITE_API_KEY || '';
+    if (!apiKey) {
+      console.warn('API Key is missing');
+      return "Demo Mode: The AI Concierge is currently offline. Please configure the API Key.";
     }
 
-    const data = await res.json();
-    return data.text || "I apologize, I'm having trouble connecting to the reservation system.";
+    const ai = new GoogleGenerativeAI(apiKey);
+    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const response = await model.generateContent(prompt);
+    return response.response.text();
   } catch (err) {
-    console.error('Error calling concierge function', err);
-    return "I am currently offline. Please check your internet connection.";
+    console.error('Error calling Gemini SDK', err);
+    return "I apologize, I'm having trouble connecting to the reservation system right now.";
   }
 };
