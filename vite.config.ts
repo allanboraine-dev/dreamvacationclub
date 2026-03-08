@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
-  // Netlify uses VITE_ prefix for frontend env vars
   const env = loadEnv(mode, (process as any).cwd(), '');
   
   // Get the API key from either VITE_API_KEY or API_KEY env variable
