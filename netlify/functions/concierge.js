@@ -12,7 +12,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const ai = new GoogleGenerativeAI({ apiKey: process.env.GENERATIVE_API_KEY });
+    const ai = new GoogleGenerativeAI(process.env.GENERATIVE_API_KEY);
     const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const response = await model.generateContent(prompt);
     // response.response.text() is synchronous in this SDK wrapper
