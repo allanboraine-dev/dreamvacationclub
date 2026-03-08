@@ -32,8 +32,9 @@ export const generateConciergeResponse = async (userMessage: string, userProfile
     const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const response = await model.generateContent(prompt);
     return response.response.text();
-  } catch (err) {
-    console.error('Error calling Gemini SDK', err);
-    return "I apologize, I'm having trouble connecting to the reservation system right now.";
+  } catch (err: any) {
+    console.error('Error calling Gemini SDK:', err);
+    console.error('Error details:', err?.message || err);
+    return "I apologize, I'm having trouble connecting to the reservation system right now. (" + (err?.message || 'Unknown error').substring(0, 100) + ")";
   }
 };
