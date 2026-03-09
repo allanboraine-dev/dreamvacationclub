@@ -40,17 +40,7 @@ export const MOCK_USER: MemberProfile = {
       status: 'Confirmed'
     }
   ],
-  activeWatches: [
-    {
-      id: "WATCH-DEMO-001",
-      resortId: "wc-2",
-      resortName: "Beacon Island Resort",
-      location: "Plettenberg Bay",
-      checkIn: "2026-03-15",
-      checkOut: "2026-03-20",
-      status: 'Active'
-    }
-  ]
+  activeWatches: []
 };
 
 export const CANCELLATION_DEALS: CancellationDeal[] = [

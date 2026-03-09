@@ -252,7 +252,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 </button>
                                 <button onClick={onSimulateMatch} className="flex items-center gap-3 p-3 hover:bg-slate-700 rounded-xl transition-colors text-xs font-bold text-left">
                                     <Zap size={14} className="text-amber-500" />
-                                    Simulate Beacon Match
+                                    Simulate Sun City Match
                                 </button>
                                 <button onClick={handleSpecs} className="flex items-center gap-3 p-3 hover:bg-slate-700 rounded-xl transition-colors text-xs font-bold text-left">
                                     <FileText size={14} className="text-purple-400" />

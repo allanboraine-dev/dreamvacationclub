@@ -199,11 +199,24 @@ const App: React.FC = () => {
 
   const handleSimulateMatch = () => {
     // 1. Ensure user has the watch status as 'Matched'
+    // If no watch exists, we'll inject one for the demo
     setUser(prev => {
       const updatedWatches = [...prev.activeWatches];
-      const watchIdx = updatedWatches.findIndex(w => w.resortName === "Beacon Island Resort");
+      const watchIdx = updatedWatches.findIndex(w => w.resortName === "Sun City Vacation Club");
+      
       if (watchIdx !== -1) {
         updatedWatches[watchIdx] = { ...updatedWatches[watchIdx], status: 'Matched' };
+      } else {
+        // Inject the watch if missing for the demo
+        updatedWatches.push({
+          id: `WATCH-SIM-${Date.now()}`,
+          resortId: "nw-1",
+          resortName: "Sun City Vacation Club",
+          location: "Sun City",
+          checkIn: "2026-03-15",
+          checkOut: "2026-03-20",
+          status: 'Matched'
+        });
       }
       return { ...prev, activeWatches: updatedWatches };
     });
@@ -211,18 +224,18 @@ const App: React.FC = () => {
     // 2. Inject the deal
     const newDeal: CancellationDeal = {
       id: `MATCH-${Date.now()}`,
-      resortName: "Beacon Island Resort",
-      location: "Plettenberg Bay",
+      resortName: "Sun City Vacation Club",
+      location: "Sun City",
       checkIn: "2026-03-15",
       checkOut: "2026-03-20",
-      imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1000",
-      oldPoints: 6750, // 5 nights * 1350
-      newPoints: 3375, // 50% discount
+      imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1000",
+      oldPoints: 8000, 
+      newPoints: 4000, 
       timeLeft: "MATCHED FOR YOU"
     };
 
     setActiveDeals(prev => [newDeal, ...prev]);
-    showNotification("🔥 BREAKING: A match was found for your Beacon Island watch!", "success");
+    showNotification("🔥 BREAKING: A match was found for your Sun City watch!", "success");
   };
 
   const handleResetDemo = () => {

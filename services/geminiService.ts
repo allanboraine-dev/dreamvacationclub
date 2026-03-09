@@ -29,7 +29,7 @@ export const generateConciergeResponse = async (userMessage: string, userProfile
     }
 
     const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
     const response = await model.generateContent(prompt);
     return response.response.text();
   } catch (err: any) {
