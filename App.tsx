@@ -103,6 +103,11 @@ const App: React.FC = () => {
       // Remove any active watch for this resort since it's now booked
       activeWatches: prev.activeWatches.filter(w => w.resortName !== newBooking.resortName)
     }));
+
+    // 3. Remove from Active Deals if this was a "grabbed" deal
+    setActiveDeals(prev => prev.filter(deal => 
+      !(deal.resortName === newBooking.resortName && deal.checkIn === newBooking.checkIn)
+    ));
   };
 
   const handleAddWatch = (watch: Omit<CancellationWatch, 'id' | 'status'>) => {
