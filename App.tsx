@@ -56,15 +56,22 @@ const App: React.FC = () => {
     showNotification(`Welcome back, ${user.firstName}!`, 'success');
   };
 
-  const handleUpdatePoints = (amount: number, type: 'add' | 'subtract') => {
-    setUser(prev => ({
-      ...prev,
-      points: {
-        ...prev.points,
-        available: type === 'add' ? prev.points.available + amount : prev.points.available - amount,
-        total: type === 'add' ? prev.points.total + amount : prev.points.total
-      }
-    }));
+  const handleUpdatePoints = (amount: number, type: 'add' | 'subtract', isPurchase: boolean = false) => {
+    setUser(prev => {
+      const newAvailable = type === 'add' ? prev.points.available + amount : prev.points.available - amount;
+      const newTotal = isPurchase && type === 'add' ? prev.points.total + amount : prev.points.total;
+      const newUsed = type === 'subtract' ? prev.points.used + amount : (isPurchase ? prev.points.used : prev.points.used - amount);
+
+      return {
+        ...prev,
+        points: {
+          ...prev.points,
+          available: newAvailable,
+          total: newTotal,
+          used: Math.max(0, newUsed)
+        }
+      };
+    });
   };
 
   const handleAddBooking = (newBooking: Omit<UpcomingHoliday, 'id' | 'confirmationCode' | 'status'>) => {
@@ -77,7 +84,7 @@ const App: React.FC = () => {
     };
 
     // Deduct points
-    handleUpdatePoints(newBooking.pointsUsed, 'subtract');
+    handleUpdatePoints(newBooking.pointsUsed, 'subtract', false);
 
     // Add to list (at start)
     setUser(prev => ({
@@ -105,22 +112,20 @@ const App: React.FC = () => {
 
     if (!bookingToCancel) return;
 
-    // 1. Remove from User Bookings (or mark cancelled)
+    // 1. Remove from User Bookings
     setUser(prev => ({
       ...prev,
       bookings: prev.bookings.filter(b => b.id !== bookingId)
     }));
 
-    // 2. Refund Points (e.g., 80% refund policy)
+    // 2. Refund Points (80% refund policy)
     const refundAmount = Math.floor(bookingToCancel.pointsUsed * 0.8);
-    handleUpdatePoints(refundAmount, 'add');
+    handleUpdatePoints(refundAmount, 'add', false);
 
     // 3. Create a "Cancellation Deal" for the Dashboard
-    // The deal is usually cheaper than original to sell fast (e.g., 50% of original cost)
     const dealPrice = Math.floor(bookingToCancel.pointsUsed * 0.5);
 
     // 3.5 Check for matching Active Watches
-    // A simple match checks if the resort is the same. In a real app, it would check dates too.
     const matchingWatchIndex = user.activeWatches.findIndex(w =>
       w.status === 'Active' &&
       w.resortName === bookingToCancel.resortName
@@ -129,7 +134,6 @@ const App: React.FC = () => {
     let isMatchedDeal = false;
 
     if (matchingWatchIndex !== -1) {
-      // We found a match! update the watch status to matched
       isMatchedDeal = true;
 
       setUser(prev => {
@@ -141,7 +145,7 @@ const App: React.FC = () => {
         return { ...prev, activeWatches: updatedWatches };
       });
 
-      showNotification(`🔥 MATCH FOUND! A cancellation at ${bookingToCancel.resortName} just became available!`, 'success');
+      showNotification(`🔥 MATCH FOUND: ${bookingToCancel.resortName}`, 'success');
     }
 
     const newDeal: CancellationDeal = {
@@ -284,9 +288,9 @@ const App: React.FC = () => {
           onCancelBooking={handleCancelBooking}
         />;
       case AppView.BUY_POINTS:
-        return <BuyPoints user={user} onNavigate={setCurrentView} showNotification={showNotification} onUpdatePoints={handleUpdatePoints} />;
+        return <BuyPoints user={user} onNavigate={setCurrentView} showNotification={showNotification} onUpdatePoints={(amt) => handleUpdatePoints(amt, 'add', true)} />;
       case AppView.TRANSFER:
-        return <Transfer user={user} onNavigate={setCurrentView} showNotification={showNotification} onUpdatePoints={handleUpdatePoints} />;
+        return <Transfer user={user} onNavigate={setCurrentView} showNotification={showNotification} onUpdatePoints={(amt) => handleUpdatePoints(amt, 'subtract', false)} />;
       default:
         return <Dashboard
           user={user}
