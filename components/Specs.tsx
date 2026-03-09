@@ -16,7 +16,7 @@ const Specs: React.FC = () => {
                         The Efficiency Engine
                     </h2>
                     <p className="text-sm text-slate-400 leading-relaxed mb-4">
-                        This PWA (Progressive Web App) is designed to reduce call center volume by 60% while monetizing unused inventory via the "Cancellation Watch" algorithm.
+                        This PWA (Progressive Web App) is designed to reduce call center volume by 60% while monetizing unused inventory via the "Cancellation Watch" algorithm which automatically fulfills member requests when matched with real-time cancellations.
                     </p>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                         <div className="bg-slate-900 p-2 rounded border border-slate-700 flex items-center gap-2">
@@ -82,8 +82,8 @@ const Specs: React.FC = () => {
                         <p><span className="text-blue-400">Frontend:</span> React 18, Tailwind CSS</p>
                         <p><span className="text-blue-400">Build System:</span> Vite (Production Bundling)</p>
                         <p><span className="text-blue-400">Infrastructure:</span> Netlify Edge (Global CDN)</p>
-                        <p><span className="text-blue-400">AI Core:</span> Google Gemini 1.5 Flash (Latency: 200ms)</p>
-                        <p><span className="text-blue-400">Security:</span> RSA ID Validation (Luhn Algo), JWT Auth</p>
+                        <p><span className="text-blue-400">AI Core:</span> Google Gemini 2.0 Flash (Optimized for Travel Planning)</p>
+                        <p><span className="text-blue-400">Security:</span> RSA ID Validation, JWT Authentication, End-to-End Encryption</p>
                     </div>
                 </section>
 

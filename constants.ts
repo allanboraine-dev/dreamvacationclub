@@ -320,13 +320,42 @@ export const DATA_SCHEMA_SPEC = {
       },
       "bookings": {
         "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "resortName": { "type": "string" },
-            "status": { "type": "string", "enum": ["Confirmed", "Pending"] }
-          }
-        }
+        "items": { "$ref": "#/definitions/UpcomingHoliday" }
+      },
+      "activeWatches": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/CancellationWatch" }
+      }
+    }
+  },
+  "Resort": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "name": { "type": "string" },
+      "location": { "type": "string" },
+      "province": { "type": "string" },
+      "rating": { "type": "number" },
+      "pointsPerNight": { "type": "integer" },
+      "amenities": { "type": "array", "items": { "type": "string" } },
+      "maxGuests": { "type": "integer" }
+    }
+  },
+  "definitions": {
+    "UpcomingHoliday": {
+      "type": "object",
+      "properties": {
+        "resortName": { "type": "string" },
+        "checkIn": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["Confirmed", "Pending", "Cancelled"] }
+      }
+    },
+    "CancellationWatch": {
+      "type": "object",
+      "properties": {
+        "resortName": { "type": "string" },
+        "checkIn": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["Active", "Matched"] }
       }
     }
   }
