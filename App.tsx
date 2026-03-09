@@ -89,7 +89,9 @@ const App: React.FC = () => {
     // Add to list (at start)
     setUser(prev => ({
       ...prev,
-      bookings: [fullBooking, ...prev.bookings]
+      bookings: [fullBooking, ...prev.bookings],
+      // Remove any active watch for this resort since it's now booked
+      activeWatches: prev.activeWatches.filter(w => w.resortName !== newBooking.resortName)
     }));
   };
 
@@ -136,14 +138,11 @@ const App: React.FC = () => {
     if (matchingWatchIndex !== -1) {
       isMatchedDeal = true;
 
-      setUser(prev => {
-        const updatedWatches = [...prev.activeWatches];
-        updatedWatches[matchingWatchIndex] = {
-          ...updatedWatches[matchingWatchIndex],
-          status: 'Matched'
-        };
-        return { ...prev, activeWatches: updatedWatches };
-      });
+      // REMOVE the watch since it's now matched and shown in deals
+      setUser(prev => ({
+        ...prev,
+        activeWatches: prev.activeWatches.filter((_, i) => i !== matchingWatchIndex)
+      }));
 
       showNotification(`🔥 MATCH FOUND: ${bookingToCancel.resortName}`, 'success');
     }
@@ -202,28 +201,11 @@ const App: React.FC = () => {
   };
 
   const handleSimulateMatch = () => {
-    // 1. Ensure user has the watch status as 'Matched'
-    // If no watch exists, we'll inject one for the demo
-    setUser(prev => {
-      const updatedWatches = [...prev.activeWatches];
-      const watchIdx = updatedWatches.findIndex(w => w.resortName === "Sun City Vacation Club");
-      
-      if (watchIdx !== -1) {
-        updatedWatches[watchIdx] = { ...updatedWatches[watchIdx], status: 'Matched' };
-      } else {
-        // Inject the watch if missing for the demo
-        updatedWatches.push({
-          id: `WATCH-SIM-${Date.now()}`,
-          resortId: "nw-1",
-          resortName: "Sun City Vacation Club",
-          location: "Sun City",
-          checkIn: "2026-03-15",
-          checkOut: "2026-03-20",
-          status: 'Matched'
-        });
-      }
-      return { ...prev, activeWatches: updatedWatches };
-    });
+    // 1. Ensure user has the watch removed if it existed
+    setUser(prev => ({
+      ...prev,
+      activeWatches: prev.activeWatches.filter(w => w.resortName !== "Sun City Vacation Club")
+    }));
 
     // 2. Inject the deal
     const newDeal: CancellationDeal = {
