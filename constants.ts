@@ -247,7 +247,7 @@ export const RESORTS: Resort[] = [
     maxGuests: 6
     ,
     unavailableRanges: [
-      { from: '2024-07-05', to: '2024-07-07' }
+      { from: '2026-03-15', to: '2026-03-20' }
     ]
   },
   {
