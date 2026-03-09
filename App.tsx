@@ -75,6 +75,16 @@ const App: React.FC = () => {
   };
 
   const handleAddBooking = (newBooking: Omit<UpcomingHoliday, 'id' | 'confirmationCode' | 'status'>) => {
+    // Check for duplicate bookings (same resort and same date)
+    const isDuplicate = user.bookings.some(
+      b => b.resortName === newBooking.resortName && b.checkIn === newBooking.checkIn
+    );
+
+    if (isDuplicate) {
+      showNotification(`Duplicate Booking: You already have a reservation for ${newBooking.resortName} on this date.`, 'error');
+      return;
+    }
+
     const bookingId = `DVC-${Math.floor(Math.random() * 10000)}`;
     const fullBooking: UpcomingHoliday = {
       ...newBooking,
